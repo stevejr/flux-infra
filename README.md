@@ -4,8 +4,10 @@ This repositroy contains the infrastructure applications that are deployed to al
 
 ## Available Resources
 
-The below table lists the available resources at the current tag level **v1.0.0**
+The below table lists the available resources at the current tag level **v1.0.1**
 
 | Name | Version | Location |
 |------|---------|----------|
+| Cert Manager | v1.1.0 | ./cert-manager/app |
 | Cert Manager CRDs | v1.1.0 | ./cert-manager/crds |
+| JetStack HelmRepository | latest | ./sources |
