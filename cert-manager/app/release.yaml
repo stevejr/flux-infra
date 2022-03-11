@@ -29,6 +29,8 @@ spec:
     image:
       tag: "v1.1.0"
     installCRDs: false
+    nodeSelector: 
+      node-group-name: "privileged-ng"
     # Added SecurityContext due to https://github.com/jetstack/cert-manager/issues/1422
     securityContext:
       fsGroup: 65534
@@ -39,9 +41,16 @@ spec:
       limits:
         cpu: 20m
         memory: 100Mi
+    tolerations:
+      - key: "privileged"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
     webhook:
       image:
         tag: "v1.1.0"
+      nodeSelector: 
+        node-group-name: "privileged-ng"
       resources:
         requests:
           cpu: 10m
@@ -49,9 +58,16 @@ spec:
         limits:
           cpu: 20m
           memory: 64Mi
+      tolerations:
+        - key: "privileged"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
     cainjector:
       image:
         tag: "v1.1.0"
+      nodeSelector: 
+        node-group-name: "privileged-ng"
       resources:
         requests:
           cpu: 10m
@@ -59,3 +75,8 @@ spec:
         limits:
           cpu: 20m
           memory: 100Mi
+      tolerations:
+        - key: "privileged"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
