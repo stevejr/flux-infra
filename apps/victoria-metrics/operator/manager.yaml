@@ -30,7 +30,7 @@ spec:
         env:
         - name: WATCH_NAMESPACE
           value: ""
-        image: victoriametrics/operator:v.0.22.1
+        image: victoriametrics/operator:v0.22.1
         name: manager
         resources:
           limits:
