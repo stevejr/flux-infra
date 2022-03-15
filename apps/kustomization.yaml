@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   # - amazon-cloudwatch-fluent-bit
   - cert-manager
-  - cluster-autoscaler
+  # - cluster-autoscaler
   # - grafana
   # - metrics-server
   # - prometheus
