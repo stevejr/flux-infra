@@ -1,0 +1,32 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: kubernetes-service-probes
+  namespace: victoria-metrics
+spec:
+  discoveryRole: "service"
+  jobLabel: job
+  endpoints:
+    - scrapeTimeout: 2s
+      path: "/probe"
+      params:
+        module:
+          - http_2xx
+      relabelConfigs:
+        - action: keep
+          regex: "true"
+          sourceLabels: [ "__meta_kubernetes_service_annotation_prometheus_io_probe" ]
+        - sourceLabels: [ "__address__" ]
+          targetLabel: __param_target
+        - replacement: blackbox
+          targetLabel: __address__
+        - sourceLabels: [ "__param_target" ]
+          targetLabel: instance
+        - action: labelmap
+          regex: __meta_kubernetes_service_label_(.+)
+        - sourceLabels: [ "__meta_kubernetes_namespace" ]
+          targetLabel: kubernetes_namespace
+        - sourceLabels: [ "__meta_kubernetes_service_name" ]
+          targetLabel: kubernetes_name
+  namespaceSelector:
+    any: true

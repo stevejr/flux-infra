@@ -1,0 +1,37 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMSingle
+metadata:
+  name: vmsingle
+  namespace: victoria-metrics
+spec:
+  extraArgs:
+    maxLabelsPerTimeseries: '50'
+    memory.allowedPercent: '50'
+    promscrape.streamParse: 'true'
+  image:
+    repository: victoriametrics/victoria-metrics
+    tag: v1.72.0
+    pullPolicy: IfNotPresent
+  nodeSelector:
+    node-group-name: "privileged-ng"
+  removePvcAfterDelete: true
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  retentionPeriod: 2d
+  storage:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+    storageClassName: gp2-unencrypted
+  tolerations:
+    - effect: NoSchedule
+      key: privileged
+      operator: Equal
+      value: 'true'

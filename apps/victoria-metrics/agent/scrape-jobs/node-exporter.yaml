@@ -1,0 +1,35 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: node-exporter
+  namespace: victoria-metrics
+spec:
+  discoveryRole: "endpoints"
+  jobLabel: job
+  endpoints:
+    - scheme: http
+      scrape_interval: 30s
+      scrapeTimeout: 10s
+      honorLabels: true
+      honorTimestamps: true
+      path: "/metrics"
+      relabelConfigs:
+        - action: keep
+          regex: prometheus;node-exporter;metrics
+          sourceLabels: [ "__meta_kubernetes_service_label_app", "__meta_kubernetes_service_label_component", "__meta_kubernetes_endpoint_port_name" ]
+        - sourceLabels: [ "__meta_kubernetes_namespace" ]
+          targetLabel: namespace
+        - sourceLabels: [ "__meta_kubernetes_service_name" ]
+          targetLabel: service
+        - sourceLabels: [ "__meta_kubernetes_pod_name" ]
+          targetLabel: pod
+        - sourceLabels: [ "__meta_kubernetes_service_label_component" ]
+          targetLabel: job
+        - sourceLabels: [ "__meta_kubernetes_pod_node_name" ]
+          targetLabel: node
+        - sourceLabels: [ "__meta_kubernetes_pod_node_name" ]
+          targetLabel: kubernetes_node
+        - replacement: metrics
+          targetLabel: endpoint
+  namespaceSelector:
+    any: true

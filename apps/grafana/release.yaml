@@ -1,0 +1,101 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: grafana
+  namespace: grafana
+spec:
+  releaseName: grafana
+  targetNamespace: grafana
+  storageNamespace: grafana
+  chart:
+    spec:
+      chart: grafana
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+      version: 6.9.1
+  interval: 5m
+  install:
+    # disableWait - see https://toolkit.fluxcd.io/components/helm/helmreleases/#disabling-resource-waiting
+    # may want to turn back on?
+    disableWait: true
+    remediation:
+      retries: 3
+  test:
+    enable: false
+  values:
+    enabled: true
+
+    grafana.ini:
+      auth:
+        sigv4_auth_enabled: true
+      dataproxy:
+        timeout: 240
+        keep_alive_seconds: 240
+        idle_conn_timeout_seconds: 300
+
+    serviceAccount:
+      create: false
+      name: grafana
+
+    plugins:
+      - grafana-piechart-panel
+      - grafana-clock-panel
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 100Mi
+      limits:
+        cpu: 100m
+        memory: 200Mi
+
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-server.prometheus
+          access: proxy
+          isDefault: false
+        - name: CloudWatch
+          type: cloudwatch
+          jsonData:
+            authType: default
+            defaultRegion: eu-west-1
+    
+    # Use an existing secret for the admin user.
+    admin:
+      existingSecret: "loki-grafana-creds"
+      userKey: admin-user
+      passwordKey: admin-password
+    
+    sidecar:
+      dashboards:
+        enabled: true
+        searchNamespace: ALL
+      datasources:
+        enabled: true
+        searchNamespace: ALL
+      resources:
+        requests:
+          cpu: 10m
+          memory: 80Mi
+        limits:
+          cpu: 100m
+          memory: 100Mi
+    nodeSelector: 
+      node-group-name: "privileged-ng"
+    
+    tolerations:
+      - key: "privileged"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+    
+    # Utilise the below if a different label to `grafana_dashboard` is needed
+    # sidecard:
+    #   dashboards:
+    #     label: <your label>

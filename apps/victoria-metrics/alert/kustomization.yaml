@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: victoria-metrics
+
+resources:
+  - vmalert.yaml
+  - ./rules/alertmanager-alert-values.yaml
+  #- etcd-values.yaml=./alerts/etcd-alert-values.yaml
+  #- external-endpoint-values.yaml=./alerts/external-endpoint-alert-values.yaml
+  - ./rules/flux-alert-values.yaml
+  - ./rules/general-alert-values.yaml
+  - ./rules/kube-prometheus-node-alert-values.yaml
+  - ./rules/kubernetes-apps-alert-values.yaml
+  - ./rules/kubernetes-resources-alert-values.yaml
+  - ./rules/kubernetes-storage-alert-values.yaml
+  - ./rules/kubernetes-system-alert-values.yaml
+  - ./rules/node-network-alert-values.yaml
+  - ./rules/node-time-alert-values.yaml

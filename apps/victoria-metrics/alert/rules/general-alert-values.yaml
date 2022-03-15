@@ -1,0 +1,50 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: general-alert-values
+  namespace: victoria-metrics
+  labels:
+    owner: lenscloud-platform
+spec:
+  groups:
+  - name: "general"
+    rules:
+    - alert: NodeDown
+      annotations:
+        description: >-
+          {{ $labels.node }} node is down. Kubernetes treats the node as "Not Ready" and kubelet is not accessible from Prometheus.
+        summary: "{{ $labels.node }} node is down"
+      expr: >-
+        up{job="kubernetes-nodes"} == 0 and on(node) kube_node_status_condition{condition="Ready",job="kube-state-metrics",status="true"} == 0
+      for: 2m
+      labels:
+        service: general
+        severity: critical
+    - alert: TargetDown
+      annotations:
+        description: >-
+          '{{ $labels.job }}/{{ $labels.instance }}' target is down.
+        summary: "{{ $labels.job }} target is down"
+      expr: >-
+        up == 0
+      for: 2m
+      labels:
+        service: general
+        severity: critical
+    - alert: TargetFlapping
+      # _hidden:
+      #   silences:
+      #     - TargetDown
+      #   match_by:
+      #     - instance
+      #     - job
+      annotations:
+        description: >-
+          '{{ $labels.job }}/{{ $labels.instance }}' target is changing its state between UP and DOWN for 30 minutes (at least once within 15 minutes time range).
+        summary: "{{ $labels.job }} target is flapping"
+      expr: >-
+        changes(up[15m]) > 0
+      for: 30m
+      labels:
+        service: general
+        severity: critical

@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: victoria-metrics
+
+resources:
+  - vmagent.yaml
+  - scrape-jobs/alertmanager.yaml
+  - scrape-jobs/kube-state-metrics.yaml
+  - scrape-jobs/kubernetes-apiservers.yaml
+  - scrape-jobs/kubernetes-gloo-pods.yaml
+  - scrape-jobs/kubernetes-nodes-cadvisor.yaml
+  - scrape-jobs/kubernetes-nodes.yaml
+  - scrape-jobs/kubernetes-pods.yaml
+  - scrape-jobs/kubernetes-service-endpoints.yaml
+  - scrape-jobs/kubernetes-service-probes.yaml
+  - scrape-jobs/node-exporter.yaml

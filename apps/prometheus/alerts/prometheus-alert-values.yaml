@@ -1,0 +1,130 @@
+serverFiles:
+  alerts:
+    prometheus:
+    - alert: PrometheusConfigReloadFailed
+      annotations:
+        description: >-
+          Reloading Prometheus' configuration has failed for Pod '{{ $labels.namespace }}/{{ $labels.pod }}'.
+        summary: Reloading Prometheus' configuration failed
+      expr: >-
+        prometheus_config_last_reload_successful == 0
+      for: 2m
+      labels:
+        service: prometheus
+        severity: warning
+    - alert: PrometheusErrorSendingAlertsMajor
+      # _hidden:
+      #   silences:
+      #     - PrometheusErrorSendingAlertsWarning
+      #   match_by:
+      #     - alertmanager
+      #     - pod
+      annotations:
+        description: >-
+          Errors while sending alerts from Prometheus Pod '{{ $labels.namespace }}/{{ $labels.pod }}' to Alertmanager {{ $labels.Alertmanager }}.
+        summary: Errors while sending alerts from Prometheus
+      expr: >-
+        rate(prometheus_notifications_errors_total[5m]) / rate(prometheus_notifications_sent_total[5m]) > 0.03
+      for: 10m
+      labels:
+        service: prometheus
+        severity: major
+    - alert: PrometheusErrorSendingAlertsWarning
+      annotations:
+        description: >-
+          Errors while sending alerts from Prometheus Pod '{{ $labels.namespace }}/{{ $labels.pod }}' to Alertmanager {{ $labels.Alertmanager }}.
+        summary: Errors while sending alert from Prometheus
+      expr: >-
+        rate(prometheus_notifications_errors_total[5m]) / rate(prometheus_notifications_sent_total[5m]) > 0.01
+      for: 10m
+      labels:
+        service: prometheus
+        severity: warning
+    - alert: PrometheusNotConnectedToAlertmanagers
+      annotations:
+        description: >-
+          Prometheus Pod '{{ $labels.namespace }}/{{ $labels.pod }}' is not connected to any of Alertmanagers.
+        summary: Prometheus is not connected to any of Alertmanagers
+      expr: >-
+        prometheus_notifications_alertmanagers_discovered < 1
+      for: 10m
+      labels:
+        service: prometheus
+        severity: minor
+    - alert: PrometheusNotIngestingSamples
+      annotations:
+        description: >-
+          Prometheus Pod '{{ $labels.namespace }}/{{ $labels.pod }}' isn't ingesting samples.
+        summary: Prometheus isn't ingesting samples
+      expr: >-
+        rate(prometheus_tsdb_head_samples_appended_total[5m]) <= 0
+      for: 10m
+      labels:
+        service: prometheus
+        severity: warning
+    - alert: PrometheusNotificationQueueRunningFull
+      annotations:
+        description: >-
+          Prometheus' alert notification queue is running full for Pod '{{ $labels.namespace }}/{{ $labels.pod }}'.
+        summary: Prometheus' alert notification queue is running full
+      expr: >-
+        predict_linear(prometheus_notifications_queue_length[5m], 60 * 30) > prometheus_notifications_queue_capacity
+      for: 10m
+      labels:
+        service: prometheus
+        severity: warning
+    - alert: PrometheusRuleEvaluationsFailed
+      annotations:
+        description: >-
+          Prometheus Pod '{{ $labels.namespace }}/{{ $labels.pod }}' has failed evaluations for recording rules. Verify the rules state in the Status/Rules section of the Prometheus Web UI.
+        summary: Prometheus failed to evaluate recording rules
+      expr: >-
+        rate(prometheus_rule_evaluation_failures_total[5m]) > 0
+      for: 5m
+      labels:
+        service: prometheus
+        severity: warning
+    - alert: PrometheusTSDBCompactionsFailing
+      annotations:
+        description: >-
+          Prometheus Pod '{{ $labels.namespace }}/{{ $labels.pod }}' had {{ $value | humanize }} compaction failures over the last 12 hours.
+        summary: Prometheus has issues compacting sample blocks
+      expr: >-
+        increase(prometheus_tsdb_compactions_failed_total[2h]) > 0
+      for: 12h
+      labels:
+        service: prometheus
+        severity: warning
+    - alert: PrometheusTSDBReloadsFailing
+      annotations:
+        description: >-
+          Prometheus Pod '{{ $labels.namespace }}/{{ $labels.pod }}' had {{ $value | humanize }} reload failures over the last 12 hours.
+        summary: Prometheus has issues reloading data blocks from disk
+      expr: >-
+        increase(prometheus_tsdb_reloads_failures_total[2h]) > 0
+      for: 12h
+      labels:
+        service: prometheus
+        severity: warning
+    - alert: PrometheusTSDBWALCorruptions
+      annotations:
+        description: >-
+          Prometheus Pod '{{ $labels.namespace }}/{{ $labels.pod }}' has TSDB WAL corruptions for the last 5 minutes.
+        summary: Prometheus encountered WAL corruptions
+      expr: >-
+        increase(prometheus_tsdb_wal_corruptions_total[3m]) > 0
+      for: 5m
+      labels:
+        service: prometheus
+        severity: warning
+    - alert: PrometheusTargetScrapesDuplicate
+      annotations:
+        description: >-
+          Prometheus Pod '{{ $labels.namespace }}/{{ $labels.pod }}' has many samples rejected due to duplicate timestamps but different values.
+        summary: Prometheus has many samples rejected
+      expr: >-
+        increase(prometheus_target_scrapes_sample_duplicate_timestamp_total[5m]) > 0
+      for: 10m
+      labels:
+        service: prometheus
+        severity: warning

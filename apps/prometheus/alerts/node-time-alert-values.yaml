@@ -1,0 +1,15 @@
+serverFiles:
+  alerts:
+    node-time:
+    - alert: ClockSkewDetected
+      annotations:
+        description: >-
+          Clock skew detected on node-exporter Pod '{{ $labels.namespace }}/{{ $labels.pod }}'. Ensure NTP is configured correctly on this host.
+        summary: NTP offset reached the limit of 0.03 seconds
+      expr: >-
+        abs(node_timex_offset_seconds{job="node-exporter"}) > 0.03
+      for: 2m
+      labels:
+        service: node
+        severity: warning
+    

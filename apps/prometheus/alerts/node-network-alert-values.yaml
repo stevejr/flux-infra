@@ -1,0 +1,56 @@
+serverFiles:
+  alerts:
+    node-network:
+    - alert: NodeNetworkInterfaceFlapping
+      annotations:
+        description: >-
+          Network interface '{{ $labels.device }}' changing its up status often on node-exporter Pod '{{ $labels.namespace }}/{{ $labels.pod }}'.
+        summary: "{{ $labels.node }} has flapping interface"
+      expr: >-
+        changes(node_network_up{job="node-exporter",device!~"veth.+"}[2m]) > 2
+      for: 2m
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemRxPacketsDroppedTooHigh
+      annotations:
+        description: >-
+          {{ $value | printf "%.2f" }} packets received by the {{ $labels.device }} interface on the {{ $labels.node }} node were dropped during the last minute.
+        summary: 60 received packets were dropped
+      expr: >-
+        increase(node_network_receive_drop_total{device!~"br-ex|br-int|cali.*"}[1m]) > 60
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemRxPacketsErrorTooHigh
+      annotations:
+        description: >-
+          Network interface '{{ $labels.device }}' is showing receive errors on node-exporter Pod '{{ $labels.namespace }}/{{ $labels.pod }}'.
+        summary: "{{ $labels.node }} has package receive errors"
+      expr: >-
+        rate(node_network_receive_errs_total{job="node-exporter",device!~"veth.+"}[2m]) > 0
+      for: 2m
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemTxPacketsDroppedTooHigh
+      annotations:
+        description: >-
+          {{ $value | printf "%.2f" }} packets transmitted by the {{ $labels.device }} interface on the {{ $labels.node }} node were dropped during the last minute.
+        summary: 100 transmitted packets were dropped
+      expr: >-
+        increase(node_network_transmit_drop_total{device!~"cali.*"}[1m]) > 100
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemTxPacketsErrorTooHigh
+      annotations:
+        description: >-
+          Network interface '{{ $labels.device }}' is showing transmit errors on node-exporter Pod '{{ $labels.namespace }}/{{ $labels.pod }}'.
+        summary: "{{ $labels.node }} has package transmit errors"
+      expr: >-
+        rate(node_network_transmit_errs_total{job="node-exporter",device!~"veth.+"}[2m]) > 0
+      for: 2m
+      labels:
+        service: node
+        severity: warning    

@@ -1,0 +1,67 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: kubernetes-storage-alerting-alert-values
+  namespace: victoria-metrics
+  labels:
+    owner: lenscloud-platform
+spec:
+  groups:
+  - name: "kubernetes-storage"
+    rules:
+    - alert: KubePersistentVolumeErrors
+      annotations:
+        description: >-
+          The PersistentVolume {{ $labels.persistentvolume }} has status {{ $labels.phase }}.
+        summary: The PersistentVolume {{ $labels.persistentvolume }} has status {{ $labels.phase }}
+      expr: >-
+        kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state-metrics"} > 0
+      for: 5m
+      labels:
+        service: kubernetes-storage
+        severity: critical
+    - alert: KubePersistentVolumeFullInFourDays
+      annotations:
+        description: >-
+          The PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} is expected to fill up within four days. Currently {{ printf "%0.2f" $value }}% is available.
+        summary: PersistentVolume {{ $labels.persistentvolumeclaim }} is expected to fill up in 4 days
+      expr: >-
+        100 * ( kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes ) < 15 and predict_linear(kubelet_volume_stats_available_bytes[36h], 4 * 24 * 3600) < 0
+      for: 5m
+      labels:
+        service: kubernetes-storage
+        severity: warning
+    - alert: KubePersistentVolumeUsageWarning
+      # _hidden:
+      #   silences:
+      #     - KubePersistentVolumeFullInFourDays
+      #   match_by:
+      #     - namespace
+      #     - persistentvolumeclaim
+      annotations:
+        description: >-
+          The PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} is only {{ printf "%0.2f" $value }}% free.
+        summary: PersistentVolume {{ $labels.persistentvolumeclaim }} has less than 25% free space
+      expr: >-
+        100 * kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes < 25
+      for: 1m
+      labels:
+        service: kubernetes-storage
+        severity: warning
+    - alert: KubePersistentVolumeUsageCritical
+      # _hidden:
+      #   silences:
+      #     - KubePersistentVolumeFullInFourDays
+      #   match_by:
+      #     - namespace
+      #     - persistentvolumeclaim
+      annotations:
+        description: >-
+          The PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} is only {{ printf "%0.2f" $value }}% free.
+        summary: PersistentVolume {{ $labels.persistentvolumeclaim }} has less than 3% free space
+      expr: >-
+        100 * kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes < 3
+      for: 1m
+      labels:
+        service: kubernetes-storage
+        severity: critical

@@ -1,0 +1,126 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: grafana
+resources:
+  - release.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+- name: grafana-custom-config
+  namespace: grafana
+  literals:
+  - grafana_server_root_url="https://grafana/"
+- name: flux-cluster-stats
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "flux-cluster-stats"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/flux-cluster-stats.json
+- name: gitops-toolkit-control-plane
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "gitops-toolkit-control-plane"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/gitops-toolkit-control-plane.json
+- name: alertmanager
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "alertmanager"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/alertmanager.json
+- name: kubernetes-cluster
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "kubernetes-cluster"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/kubernetes-cluster.json
+- name: kubernetes-deployments.json
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "kubernetes-deployments"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/kubernetes-deployments.json
+- name: kubernetes-namespace
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "kubernetes-namespace"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/kubernetes-namespace.json
+- name: kubernetes-node
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "kubernetes-node"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/kubernetes-node.json
+- name: kubernetes-pod
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "kubernetes-pod"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/kubernetes-pod.json
+- name: kubernetes-volumes
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "kubernetes-volumes"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/kubernetes-volumes.json
+# Envoy Global Dashboard has been sourced from https://grafana.com/grafana/dashboards/11022
+- name: envoy-global
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "envoy-global"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/envoy-global.json
+# Envoy Proxy Dashboard has been sourced from https://grafana.com/grafana/dashboards/6693
+- name: envoy-proxy
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "envoy-proxy"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/envoy-proxy.json

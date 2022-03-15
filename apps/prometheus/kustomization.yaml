@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prometheus
+resources:
+  - release.yaml
+
+generatorOptions:
+  disableNameSuffixHash: false
+
+configMapGenerator:
+- name: prometheus-alerts
+  files:
+  - alertmanager-values.yaml=./alerts/alertmanager-alert-values.yaml
+  #- etcd-values.yaml=./alerts/etcd-alert-values.yaml
+  #- external-endpoint-values.yaml=./alerts/external-endpoint-alert-values.yaml
+  - flux-values.yaml=./alerts/flux-alert-values.yaml
+  - general-values.yaml=./alerts/general-alert-values.yaml
+  - kube-prometheus-node-values.yaml=./alerts/kube-prometheus-node-alert-values.yaml
+  - kubernetes-apps-values.yaml=./alerts/kubernetes-apps-alert-values.yaml
+  - kubernetes-resources-values.yaml=./alerts/kubernetes-resources-alert-values.yaml
+  - kubernetes-storage-values.yaml=./alerts/kubernetes-storage-alert-values.yaml
+  - kubernetes-system-values.yaml=./alerts/kubernetes-system-alert-values.yaml
+  - node-network-values.yaml=./alerts/node-network-alert-values.yaml
+  - node-time-values.yaml=./alerts/node-time-alert-values.yaml
+  - prometheus-values.yaml=./alerts/prometheus-alert-values.yaml
+
+configurations:
+  - kustomizeconfig.yaml

@@ -1,0 +1,181 @@
+serverFiles:
+  alerts:
+    kube-prometheus-node-alerting:
+    - alert: FileDescriptorUsageCritical
+      # _hidden:
+      #   silences:
+      #     - FileDescriptorUsageMajor
+      #     - FileDescriptorUsageWarning
+      #   match_by:
+      #     - node
+      annotations:
+        description: >-
+          File descriptors usage reached 95% on the {{ $labels.node }} node.
+        summary: 95% of file descriptors are used
+      expr: >-
+        node_filefd_allocated / node_filefd_maximum > 0.95
+      for: 2m
+      labels:
+        service: node
+        severity: critical
+    - alert: FileDescriptorUsageMajor
+      # _hidden:
+      #   silences:
+      #     - FileDescriptorUsageWarning
+      #   match_by:
+      #     - node
+      annotations:
+        description: >-
+          File descriptors usage reached 90% on the {{ $labels.node }} node.
+        summary: 90% of file descriptors are used
+      expr: >-
+        node_filefd_allocated / node_filefd_maximum > 0.9
+      for: 2m
+      labels:
+        service: node
+        severity: major
+    - alert: FileDescriptorUsageWarning
+      annotations:
+        description: >-
+          File descriptors usage reached 80% on the {{ $labels.node }} node.
+        summary: 80% of file descriptors are used
+      expr: >-
+        node_filefd_allocated / node_filefd_maximum > 0.8
+      for: 2m
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemCpuFullWarning
+      annotations:
+        description: >-
+          The average CPU usage on the {{ $labels.node }} node is {{ $value }}% for 2 minutes.
+        summary: High CPU usage
+      expr: >-
+        100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+      for: 2m
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemDiskErrorsTooHigh
+      annotations:
+        description: >-
+          The {{ $labels.device }} disk on the {{ $labels.node }} node is reporting errors for 5 minutes.
+        summary: Disk {{ $labels.device }} is failing
+      expr: >-
+        increase(hdd_errors_total[1m]) > 0
+      for: 5m
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemDiskFullMajor
+      # _hidden:
+      #   silences:
+      #     - SystemDiskFullWarning
+      #   match_by:
+      #     - device
+      #     - mountpoint
+      #     - node
+      annotations:
+        description: >-
+          The {{ $labels.device }} disk partition ({{ $labels.mountpoint }}) on the {{ $labels.node }} node is {{ $value }}% full for 2 minutes.
+        summary: Disk partition {{ $labels.mountpoint }} is 95% full
+      expr: >-
+        (1 - node_filesystem_free_bytes / node_filesystem_size_bytes) * 100 >= 95
+      for: 2m
+      labels:
+        service: node
+        severity: major
+    - alert: SystemDiskFullWarning
+      annotations:
+        description: >-
+          The {{ $labels.device }} disk partition {{ $labels.mountpoint }} on the {{ $labels.node }} node is {{ $value }}% full for 2 minutes.
+        summary: Disk partition {{ $labels.mountpoint }} is 85% full
+      expr: >-
+        (1 - node_filesystem_free_bytes / node_filesystem_size_bytes) * 100 >= 85
+      for: 2m
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemDiskInodesFullMajor
+      # _hidden:
+      #   silences:
+      #     - SystemDiskInodesFullWarning
+      #   match_by:
+      #     - device
+      #     - mountpoint
+      #     - node
+      annotations:
+        description: >-
+          The {{ $labels.device }} disk on the {{ $labels.node }} node uses {{ $value }}% of disk inodes in the {{ $labels.mountpoint }} volume for 2 minutes.
+        summary: 95% of inodes for {{ $labels.mountpoint }} are used
+      expr: >-
+        100 - 100 * node_filesystem_files_free / node_filesystem_files >= 95
+      for: 2m
+      labels:
+        service: node
+        severity: major
+    - alert: SystemDiskInodesFullWarning
+      annotations:
+        description: >-
+          The {{ $labels.device }} disk on the {{ $labels.node }} node uses {{ $value }}% of disk inodes in the {{ $labels.mountpoint }} volume for 2 minutes.
+        summary: 85% of inodes for {{ $labels.mountpoint }} are used
+      expr: >-
+        100 - 100 * node_filesystem_files_free / node_filesystem_files >= 85
+      for: 2m
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemLoadTooHighCritical
+      # _hidden:
+      #   silences:
+      #     - SystemLoadTooHighWarning
+      #   match_by:
+      #     - node
+      annotations:
+        description: >-
+          The system load per CPU on the {{ $labels.node }} node is {{ $value }} for 5 minutes.
+        summary: System load is more than 2 per CPU
+      expr: >-
+        avg by(node) (node_load5) / avg by(node) (machine_cpu_cores) > 2
+      for: 5m
+      labels:
+        service: node
+        severity: critical
+    - alert: SystemLoadTooHighWarning
+      annotations:
+        description: >-
+          The system load per CPU on the {{ $labels.node }} node is {{ $value }} for 5 minutes.
+        summary: System load is more than 1 per CPU
+      expr: >-
+        avg by(node) (node_load5) / avg by(node) (machine_cpu_cores) > 1
+      for: 5m
+      labels:
+        service: node
+        severity: warning
+    - alert: SystemMemoryFullMajor
+      # _hidden:
+      #   silences:
+      #     - SystemMemoryFullWarning
+      #   match_by:
+      #     - node
+      annotations:
+        description: >-
+          The {{ $labels.node }} node uses {{ $value }}% of memory for 5 minutes.
+        summary: More than 95% of memory is used or less than 4Gb memory is available
+      expr: >-
+        100 * (node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes) / node_memory_MemTotal_bytes < 5 and node_memory_Active_bytes < 4 * 2^30
+      for: 5m
+      labels:
+        service: node
+        severity: major
+    - alert: SystemMemoryFullWarning
+      annotations:
+        description: >-
+          The {{ $labels.node }} node uses {{ $value }}% of memory for 5 minutes.
+        summary: More than 90% of memory is used or less than 8Gb memory is available
+      expr: >-
+        100 * (node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes) / node_memory_MemTotal_bytes < 10 and node_memory_Active_bytes < 8 * 2^30
+      for: 5m
+      labels:
+        service: node
+        severity: warning    

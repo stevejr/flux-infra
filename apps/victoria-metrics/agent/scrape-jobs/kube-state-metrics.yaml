@@ -1,0 +1,26 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: kube-state-metrics
+  namespace: victoria-metrics
+spec:
+  discoveryRole: "endpoints"
+  jobLabel: job
+  endpoints:
+    - scrape_interval: 30s
+      scrapeTimeout: 10s
+      honorLabels: true
+      honorTimestamps: true
+      path: "/metrics"
+      relabelConfigs:
+        - action: keep
+          regex: prometheus;kube-state-metrics
+          sourceLabels: [ "__meta_kubernetes_pod_label_app_kubernetes_io_instance", "__meta_kubernetes_service_label_app_kubernetes_io_name" ]
+        - sourceLabels: [ "__meta_kubernetes_service_label_app_kubernetes_io_name" ]
+          targetLabel: job
+      metricRelabelConfigs:
+        - action: drop
+          regex: kube_pod_[A-Za-z0-9_]+_reason
+          sourceLabels: [ "__name__" ]
+  namespaceSelector:
+    any: true

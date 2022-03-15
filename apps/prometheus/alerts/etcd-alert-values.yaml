@@ -1,0 +1,130 @@
+serverFiles:
+  alerts:
+    etcd:
+    - alert: etcdGRPCRequestsSlow
+      annotations:
+        description: 
+          etcd cluster '{{ $labels.job }}' gRPC requests to {{ $labels.grpc_method }} are taking {{ $value }}s on etcd instance {{ $labels.instance }}.
+        summary: etcd cluster has slow gRPC requests
+      expr: 
+        histogram_quantile(0.99, sum(rate(grpc_server_handling_seconds_bucket{job=~".*etcd.*", grpc_type="unary"}[5m])) by (job, instance, grpc_service, grpc_method, le)) > 0.15
+      for: 10m
+      labels:
+        service: etcd
+        severity: warning
+    - alert: etcdHighCommitDurations
+      annotations:
+        description: 
+          etcd cluster '{{ $labels.job }}' 99th percentile commit durations {{ $value }}s on etcd instance {{ $labels.instance }}.
+        summary: etcd cluster has high commit duration
+      expr: 
+        histogram_quantile(0.99, rate(etcd_disk_backend_commit_duration_seconds_bucket{job=~".*etcd.*"}[5m])) > 0.25
+      for: 10m
+      labels:
+        service: etcd
+        severity: warning
+    - alert: etcdHighFsyncDurations
+      annotations:
+        description: 
+          etcd cluster '{{ $labels.job }}' 99th percentile fync durations are {{ $value }}s on etcd instance {{ $labels.instance }}.
+        summary: etcd cluster has high fync duration
+      expr: 
+        histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket{job=~".*etcd.*"}[5m])) > 0.5
+      for: 10m
+      labels:
+        service: etcd
+        severity: warning
+    # - alert: etcdHighNumberOfFailedGRPCRequestsCritical
+    #   enabled: false
+    #   # _hidden:
+    #   #   silences:
+    #   #     - etcdHighNumberOfFailedGRPCRequestsWarning
+    #   #   match_by:
+    #   #     - grpc_method
+    #   #     - grpc_service
+    #   #     - instance
+    #   #     - job
+    #   #   notes: |-
+    #   #     # TODO
+    #   #     enable after https://github.com/etcd-io/etcd/issues/10289 is solved
+    #   annotations:
+    #     description: 
+    #       etcd cluster '{{ $labels.job }}' {{ $value }}% of requests for {{ $labels.grpc_method }} failed on etcd instance {{ $labels.instance }}.
+    #     summary: etcd cluster has more than 5% of failed GRPC requests
+    #   expr: 
+    #     100 * sum(rate(grpc_server_handled_total{job=~".*etcd.*", grpc_code!="OK"}[5m])) BY (job, instance, grpc_service, grpc_method) / sum(rate(grpc_server_handled_total{job=~".*etcd.*"}[5m])) BY (job, instance, grpc_service, grpc_method) > 5
+    #   for: 5m
+    #   labels:
+    #     service: etcd
+    #     severity: critical
+    # - alert: etcdHighNumberOfFailedGRPCRequestsWarning
+    #   enabled: false
+    #   # _hidden:
+    #   #   notes: |-
+    #   #     # TODO
+    #   #     enable after https://github.com/etcd-io/etcd/issues/10289 is solved
+    #   annotations:
+    #     description: 
+    #       etcd cluster '{{ $labels.job }}' {{ $value }}% of requests for {{ $labels.grpc_method }} failed on etcd instance {{ $labels.instance }}.
+    #     summary: etcd cluster has more than 1% of failed GRPC requests
+    #   expr: 
+    #     100 * sum(rate(grpc_server_handled_total{job=~".*etcd.*", grpc_code!="OK"}[5m])) BY (job, instance, grpc_service, grpc_method) / sum(rate(grpc_server_handled_total{job=~".*etcd.*"}[5m])) BY (job, instance, grpc_service, grpc_method) > 1
+    #   for: 10m
+    #   labels:
+    #     service: etcd
+    #     severity: warning
+    - alert: etcdHighNumberOfFailedProposals
+      annotations:
+        description: 
+          etcd cluster '{{ $labels.job }}' {{ $value }} proposal failures within the last hour on etcd instance {{ $labels.instance }}.
+        summary: etcd cluster has more than 5 proposal failures
+      expr: 
+        rate(etcd_server_proposals_failed_total{job=~".*etcd.*"}[15m]) > 5
+      for: 15m
+      labels:
+        service: etcd
+        severity: warning
+    - alert: etcdHighNumberOfLeaderChanges
+      annotations:
+        description: 
+          etcd cluster '{{ $labels.job }}' instance {{ $labels.instance }} has seen {{ $value }} leader changes within the last hour.
+        summary: etcd cluster has seen more than 3 leader changes within the last hour
+      expr: 
+        rate(etcd_server_leader_changes_seen_total{job=~".*etcd.*"}[15m]) > 3
+      for: 15m
+      labels:
+        service: etcd
+        severity: warning
+    - alert: etcdInsufficientMembers
+      annotations:
+        description: 
+          etcd cluster '{{ $labels.job }}' insufficient members ({{ $value }}).
+        summary: etcd cluster has insufficient members
+      expr: 
+        sum(up{job=~".*etcd.*"} == bool 1) by (job) < ((count(up{job=~".*etcd.*"}) by (job) + 1) / 2)
+      for: 3m
+      labels:
+        service: etcd
+        severity: critical
+    - alert: etcdMemberCommunicationSlow
+      annotations:
+        description: 
+          etcd cluster '{{ $labels.job }}' member communication with {{ $labels.To }} is taking {{ $value }}s on etcd instance {{ $labels.instance }}.
+        summary: etcd cluster has slow member communication
+      expr: 
+        histogram_quantile(0.99, rate(etcd_network_peer_round_trip_time_seconds_bucket{job=~".*etcd.*"}[5m])) > 0.15
+      for: 10m
+      labels:
+        service: etcd
+        severity: warning
+    - alert: etcdNoLeader
+      annotations:
+        description: 
+          etcd cluster '{{ $labels.job }}' member {{ $labels.instance }} has no leader.
+        summary: etcd cluster has no leader
+      expr: 
+        etcd_server_has_leader{job=~".*etcd.*"} == 0
+      for: 1m
+      labels:
+        service: etcd
+        severity: critical

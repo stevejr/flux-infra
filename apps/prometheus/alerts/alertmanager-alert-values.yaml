@@ -1,0 +1,47 @@
+serverFiles:
+  alerts:
+    alertmanager:
+    - alert: AlertmanagerAlertsInvalidWarning
+      annotations:
+        description:
+          An average of {{ $value }} Alertmanager alerts on Pod '{{ $labels.namespace }}/{{ $labels.pod }}' are invalid for 2 minutes.
+        summary: Alertmanager alerts are invalid
+      expr: 
+        increase(alertmanager_alerts_invalid_total[2m]) > 0
+      for: 3m
+      labels:
+        service: alertmanager
+        severity: warning
+    - alert: AlertmanagerFailedReload
+      annotations:
+        description: 
+          Reloading Alertmanager's configuration has failed for Pod '{{ $labels.namespace }}/{{ $labels.pod }}'.
+        summary: Reloading Alertmanager's configuration has failed
+      expr: 
+        alertmanager_config_last_reload_successful == 0
+      for: 10m
+      labels:
+        service: alertmanager
+        severity: warning
+    - alert: AlertmanagerMembersInconsistent
+      annotations:
+        description: 
+          Alertmanager has not found all other members of the cluster.
+        summary: Alertmanager cluster members not found
+      expr: 
+        alertmanager_cluster_members != on (service) GROUP_LEFT() count by (service) (alertmanager_cluster_members)
+      for: 5m
+      labels:
+        service: alertmanager
+        severity: major
+    - alert: AlertmanagerNotificationFailureWarning
+      annotations:
+        description: 
+          An average of {{ $value }} Alertmanager {{ $labels.integration }} notifications on Pod '{{ $labels.namespace }}/{{ $labels.pod }}' fail for 2 minutes.
+        summary: Alertmanager notifications fail
+      expr: 
+        increase(alertmanager_notifications_failed_total[2m]) > 0
+      for: 3m
+      labels:
+        service: alertmanager
+        severity: warning

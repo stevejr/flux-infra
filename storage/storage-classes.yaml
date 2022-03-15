@@ -1,0 +1,29 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: gp2-encrypted
+provisioner: kubernetes.io/aws-ebs # Amazon EBS in-tree driver
+parameters:
+  type: gp2
+  fsType: ext4
+  encrypted: 'true' # EBS volumes will always be encrypted by default
+volumeBindingMode: WaitForFirstConsumer # EBS volumes are AZ specific
+reclaimPolicy: Delete
+mountOptions:
+- debug
+allowVolumeExpansion: true
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: gp2-unencrypted
+provisioner: kubernetes.io/aws-ebs # Amazon EBS in-tree driver
+parameters:
+  type: gp2
+  fsType: ext4
+  encrypted: 'false' # EBS volumes will not be encrypted by default
+volumeBindingMode: WaitForFirstConsumer # EBS volumes are AZ specific
+reclaimPolicy: Delete
+mountOptions:
+- debug
+allowVolumeExpansion: true # Can resize PVC

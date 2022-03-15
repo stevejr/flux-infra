@@ -1,0 +1,10 @@
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: slack
+  namespace: default
+spec:
+  type: slack
+  channel: lens-cloud-notifications
+  secretRef:
+    name: slack-url

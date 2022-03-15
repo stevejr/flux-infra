@@ -1,0 +1,39 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: external-endpoints-alert-values
+  namespace: victoria-metrics
+  labels:
+    owner: lenscloud-platform
+spec:
+  groups:
+  - name: "external-endpoint"
+    rules:
+    - alert: ExternalEndpointDown
+      annotations:
+        description:
+          External endpoint {{ $labels.instance }} is not accessible for the last 2 minutes.
+        summary: External endpoint is down
+      expr:
+        probe_success{job="blackbox-external-endpoint"} == 0
+      for: 2m
+      labels:
+        service: external-endpoint
+        severity: critical
+    - alert: ExternalEndpointTCPFailure
+      # _hidden:
+      #   notes: |-
+      #     # - `probe_http_ssl == 0` can represent a working plaintext connection, so add this
+      #     # - just `{phase="transfer"}` instead of `{phase!="resolve"}`, as we can be HTTP-redirected
+      #     # - can't make this a high-pass filter, because `probe_http_duration_seconds` is a timer
+      #     # - `probe_success` relies on successful HTTP status code
+      annotations:
+        description:
+          There's a problem establishing a TCP or TLS connection with {{ $labels.instance }}.
+        summary: Problem establishing TCP or TLS connection.
+      expr:
+        probe_http_ssl{job="blackbox-external-endpoint"} + on(instance) group_left probe_http_duration_seconds{job="blackbox-external-endpoint",phase="transfer"} == 0
+      for: 2m
+      labels:
+        service: external-endpoint
+        severity: critical    

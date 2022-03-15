@@ -1,0 +1,193 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: kubernetes-system-alerting-alert-values
+  namespace: victoria-metrics
+  labels:
+    owner: lenscloud-platform
+spec:
+  groups:
+  - name: "kubernetes-system"
+    rules:
+    - alert: ContainerScrapeError
+      annotations:
+        description: >-
+          Prometheus was not able to scrape metrics from the container on the {{ $labels.node }} Kubernetes node.
+        summary: Failed to get Kubernetes container metrics
+      expr: >-
+        container_scrape_error != 0
+      labels:
+        service: container
+        severity: warning
+    # - alert: KubeAPIDown
+    #   annotations:
+    #     description: >-
+    #       The Kubernetes API endpoint {{ $labels.instance }} is not accessible for the last 3 minutes.
+    #     summary: Kubernetes API endpoint is down.
+    #   expr: >-
+    #     probe_success{job="kubernetes-master-api"} == 0
+    #   for: 3m
+    #   labels:
+    #     service: kubernetes-system
+    #     severity: critical
+    - alert: KubeAPIErrorsHighMajor
+      # _hidden:
+      #   silences:
+      #     - KubeAPIErrorsHighWarning
+      #   match_by:
+      #     - job
+      annotations:
+        description: >-
+          The API server is returning errors for {{ $value }}% of requests.
+        summary: API server is returning errors for more than 3% of requests
+      expr: >-
+        sum(rate(apiserver_request_total{job="kubernetes-apiservers",code=~"^(?:5..)$"}[5m])) by (job) / sum(rate(apiserver_request_total{job="kubernetes-apiservers"}[5m])) by (job) * 100 > 3
+      for: 10m
+      labels:
+        service: kubernetes-system
+        severity: major
+    - alert: KubeAPIErrorsHighWarning
+      annotations:
+        description: >-
+          The API server is returning errors for {{ $value }}% of requests.
+        summary: API server is returning errors for more than 1% of requests
+      expr: >-
+        sum(rate(apiserver_request_total{job="kubernetes-apiservers",code=~"^(?:5..)$"}[5m])) by (job) / sum(rate(apiserver_request_total{job="kubernetes-apiservers"}[5m])) by (job) * 100 > 1
+      for: 10m
+      labels:
+        service: kubernetes-system
+        severity: warning
+    - alert: KubeAPILatencyHighMajor
+      # _hidden:
+      #   silences:
+      #     - KubeAPILatencyHighWarning
+      #   match_by:
+      #     - group
+      #     - resource
+      #     - subresource
+      #     - verb
+      #     - version
+      annotations:
+        description: >-
+          The API server has a 99th percentile latency of {{ $value }} seconds for {{ $labels.verb }} requests to {{ $labels.resource }} resource ({{ $labels.version }} version) of {{ $labels.group }} group.
+        summary: API server has a 99th percentile latency of more than 4 seconds
+      expr: >-
+        cluster_quantile:apiserver_request_latencies:histogram_quantile{job="kubernetes-apiservers",quantile="0.99",subresource!="log",verb!~"^(?:LIST|WATCH|WATCHLIST|PROXY|CONNECT)$"} > 4
+      for: 10m
+      labels:
+        service: kubernetes-system
+        severity: major
+    - alert: KubeAPILatencyHighWarning
+      annotations:
+        description: >-
+          The API server has a 99th percentile latency of {{ $value }} seconds for {{ $labels.verb }} requests to {{ $labels.resource }} resource ({{ $labels.version }} version) of {{ $labels.group }} group.
+        summary: API server has a 99th percentile latency of more than 1 second
+      expr: >-
+        cluster_quantile:apiserver_request_latencies:histogram_quantile{job="kubernetes-apiservers",quantile="0.99",subresource!="log",verb!~"^(?:LIST|WATCH|WATCHLIST|PROXY|CONNECT)$"} > 1
+      for: 10m
+      labels:
+        service: kubernetes-system
+        severity: warning
+    # - alert: KubeAPIOutage
+    #   # _hidden:
+    #   #   silences:
+    #   #     - KubeAPIDown
+    #   #   match_by:
+    #   #     - job
+    #   annotations:
+    #     description: >-
+    #       The Kubernetes API is not accessible for the last 30 seconds.
+    #     summary: Kubernetes API is down.
+    #   expr: >-
+    #     max(probe_success{job="kubernetes-master-api"}) by (job) == 0
+    #   for: 30s
+    #   labels:
+    #     service: kubernetes-system
+    #     severity: critical
+    - alert: KubeAPIResourceErrorsHighMajor
+      # _hidden:
+      #   silences:
+      #     - KubeAPIResourceErrorsHighWarning
+      #   match_by:
+      #     - resource
+      #     - subresource
+      #     - verb
+      annotations:
+        description: >-
+          The API server is returning errors for {{ $value }}% of requests for {{ $labels.verb }} {{ $labels.resource }} {{ $labels.subresource }}.
+        summary: API server is returning errors for 10% of requests
+      expr: >-
+        sum(rate(apiserver_request_total{job="kubernetes-apiservers",code=~"^(?:5..)$"}[5m])) by (resource,subresource,verb) / sum(rate(apiserver_request_total{job="kubernetes-apiservers"}[5m])) by (resource,subresource,verb) * 100 > 10
+      for: 10m
+      labels:
+        service: kubernetes-system
+        severity: major
+    - alert: KubeAPIResourceErrorsHighWarning
+      annotations:
+        description: >-
+          The API server is returning errors for {{ $value }}% of requests for {{ $labels.verb }} {{ $labels.resource }} {{ $labels.subresource }}.
+        summary: API server is returning errors for 5% of requests
+      expr: >-
+        sum(rate(apiserver_request_total{job="kubernetes-apiservers",code=~"^(?:5..)$"}[5m])) by (resource,subresource,verb) / sum(rate(apiserver_request_total{job="kubernetes-apiservers"}[5m])) by (resource,subresource,verb) * 100 > 5
+      for: 10m
+      labels:
+        service: kubernetes-system
+        severity: warning
+    - alert: KubeClientCertificateExpirationInOneDay
+      # _hidden:
+      #   silences:
+      #     - KubeClientCertificateExpirationInSevenDays
+      #   match_by:
+      #     - instance
+      annotations:
+        description: >-
+          The client certificate used to authenticate to the apiserver is expiring in less than 24 hours.
+        summary: Client certificate is expiring in 24 hours
+      expr: >-
+        apiserver_client_certificate_expiration_seconds_count{job="kubernetes-apiservers"} > 0 and on (job) histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="kubernetes-apiservers"}[5m]))) < 86400
+      labels:
+        service: kubernetes-system
+        severity: critical
+    - alert: KubeClientCertificateExpirationInSevenDays
+      annotations:
+        description: >-
+          The client certificate used to authenticate to the apiserver is expiring in less than 7 days.
+        summary: Client certificate is expiring in 7 days
+      expr: >-
+        apiserver_client_certificate_expiration_seconds_count{job="kubernetes-apiservers"} > 0 and on (job) histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="kubernetes-apiservers"}[5m]))) < 604800
+      labels:
+        service: kubernetes-system
+        severity: warning
+    - alert: KubeClientErrors
+      annotations:
+        description: >-
+          The Kubernetes API server client '{{ $labels.job }}/{{ $labels.instance }}' is experiencing {{ printf "%0.0f" $value }}% errors.
+        summary: Kubernetes API client has more than 1% error requests
+      expr: >-
+        (sum(rate(rest_client_requests_total{code=~"5.."}[5m])) by (instance, job) / sum(rate(rest_client_requests_total[5m])) by (instance, job)) * 100 > 1
+      for: 15m
+      labels:
+        service: kubernetes-system
+        severity: warning
+    - alert: KubeNodeNotReady
+      annotations:
+        description: >-
+          The Kubernetes node {{ $labels.node }} has been unready for more than an hour.
+        summary: Node {{ $labels.node }} is not ready
+      expr: >-
+        kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
+      for: 1h
+      labels:
+        service: kubernetes-system
+        severity: warning
+    - alert: KubeVersionMismatch
+      annotations:
+        description: >-
+          There are {{ $value }} different semantic versions of Kubernetes components running.
+        summary: Kubernetes components version mismatch
+      expr: >-
+        count(count by (gitVersion) (label_replace(kubernetes_build_info{job!="kube-dns"},"gitVersion","$1","gitVersion","(v[0-9]*.[0-9]*.[0-9]*).*"))) > 1
+      for: 1h
+      labels:
+        service: kubernetes-system
+        severity: warning

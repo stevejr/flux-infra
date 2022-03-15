@@ -1,0 +1,10 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: amazon-cloudwatch-fluent-bit
+  namespace: flux-system
+spec:
+  image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/aws-for-fluent-bit
+  interval: 1m0s
+  secretRef:
+    name: ecr-credentials
