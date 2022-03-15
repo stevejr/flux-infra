@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   - ./networkpolicies
   - ./sources
-  # - ./apps
+  - ./apps
   - ./providers
   - ./alerts
   - ./jobs
