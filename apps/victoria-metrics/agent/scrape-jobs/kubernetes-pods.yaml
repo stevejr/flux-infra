@@ -1,0 +1,46 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMPodScrape
+metadata:
+  name: kubernetes-pods
+  namespace: victoria-metrics
+spec:
+  jobLabel: job
+  podMetricsEndpoints:
+    - relabelConfigs:
+        - action: drop
+          sourceLabels: [ "__meta_kubernetes_pod_container_init" ]
+          regex: "true"
+        - action: keep
+          regex: "true"
+          sourceLabels: [ "__meta_kubernetes_pod_annotation_prometheus_io_scrape" ]
+        - action: keep_if_equal
+          sourceLabels: [ "__meta_kubernetes_pod_annotation_prometheus_io_port", "__meta_kubernetes_pod_container_port_number" ]
+        - action: replace
+          regex: (https?)
+          sourceLabels: [ "__meta_kubernetes_pod_annotation_prometheus_io_scheme" ]
+          targetLabel: __scheme__
+        - action: replace
+          regex: (.+)
+          sourceLabels: [ "__meta_kubernetes_pod_annotation_prometheus_io_path" ]
+          targetLabel: __metrics_path__
+        - action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: $1:$2
+          sourceLabels: [ "__address__", "__meta_kubernetes_pod_annotation_prometheus_io_port" ]
+          targetLabel: __address__
+        - action: labelmap
+          regex: __meta_kubernetes_pod_annotation_prometheus_io_param_(.+)
+          replacement: __param_$1
+        - action: labelmap
+          regex: __meta_kubernetes_pod_label_(.+)
+        - action: replace
+          sourceLabels: [ "__meta_kubernetes_namespace" ]
+          targetLabel: kubernetes_namespace
+        - action: replace
+          sourceLabels: [ "__meta_kubernetes_pod_name" ]
+          targetLabel: kubernetes_pod_name
+        - action: drop
+          regex: Pending|Succeeded|Failed|Completed
+          sourceLabels: [ "__meta_kubernetes_pod_phase" ]
+  namespaceSelector:
+    any: true

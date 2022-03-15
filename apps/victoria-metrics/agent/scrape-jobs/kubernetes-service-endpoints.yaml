@@ -1,0 +1,48 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: kubernetes-service-endpoints
+  namespace: victoria-metrics
+spec:
+  discoveryRole: "endpoints"
+  jobLabel: job
+  endpoints:
+    - scrapeTimeout: 2s
+      relabelConfigs:
+        - action: drop
+          sourceLabels: [ "__meta_kubernetes_service_name" ]
+          regex: "kube-dns-x-kube-system-x-cluster"
+        - action: keep
+          regex: "true"
+          sourceLabels: [ "__meta_kubernetes_service_annotation_prometheus_io_scrape" ]
+        - action: keep_if_equal
+          sourceLabels: [ "__meta_kubernetes_service_annotation_prometheus_io_port", "__meta_kubernetes_pod_container_port_number" ]
+        - action: replace
+          regex: (https?)
+          sourceLabels: [ "__meta_kubernetes_service_annotation_prometheus_io_scheme" ]
+          targetLabel: __scheme__
+        - action: replace
+          regex: (.+)
+          sourceLabels: [ "__meta_kubernetes_service_annotation_prometheus_io_path" ]
+          targetLabel: __metrics_path__
+        - action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: $1:$2
+          sourceLabels: [ "__address__", "__meta_kubernetes_service_annotation_prometheus_io_port" ]
+          targetLabel: __address__
+        - action: labelmap
+          regex: __meta_kubernetes_service_annotation_prometheus_io_param_(.+)
+          replacement: __param_$1
+        - action: labelmap
+          regex: __meta_kubernetes_service_label_(.+)
+        - action: replace
+          sourceLabels: [ "__meta_kubernetes_namespace" ]
+          targetLabel: kubernetes_namespace
+        - action: replace
+          sourceLabels: [ "__meta_kubernetes_service_name" ]
+          targetLabel: kubernetes_name
+        - action: replace
+          sourceLabels: [ "__meta_kubernetes_pod_node_name" ]
+          targetLabel: kubernetes_node
+  namespaceSelector:
+    any: true

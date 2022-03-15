@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: victoria-metrics
+
+resources:
+  - namespace.yaml
+  - vmsingle.yaml
+
+configMapGenerator:
+- name: victoria-metrics-single-grafana-ds
+  options:
+    labels:
+      grafana_datasource: "victoria-metrics-single-grafana-ds"
+  files:
+  - victoria-metrics-datasource.yaml=./grafana-ds/victoria-metrics-single.yaml
+- name: victoria-metrics-db
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "VictoriaMetrics"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/victoria-metrics.json
+- name: victoria-metrics-k8s-cluster
+  namespace: grafana
+  options:
+    annotations:
+      dashboard_revision: "1"
+    labels:
+      grafana_dashboard: "Kubernetes-Cluster-VictoriaMetrics"
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+  files:
+    - grafana-dashboards/victoria-metrics-kubernetes-cluster.json

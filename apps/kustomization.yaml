@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - amazon-cloudwatch-fluent-bit
+  - cert-manager
+  - cluster-autoscaler
+  - grafana
+  - metrics-server
+  - prometheus
+  - prometheus-blackbox-exporter
+  - ./victoria-metrics/agent
+  - ./victoria-metrics/alert
+  - ./victoria-metrics/single

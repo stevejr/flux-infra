@@ -1,0 +1,83 @@
+# file: base/configuration.yaml
+
+varReference:
+# Gloo Related
+- path: spec/ssl_config/sniDomains
+  kind: VirtualService
+  apiVersion: gateway.solo.io/v1
+- path: spec/ssl_config/secret_ref/name
+  kind: VirtualService
+  apiVersion: gateway.solo.io/v1
+- path: spec/ssl_config/secret_ref/namespace
+  kind: VirtualService
+  apiVersion: gateway.solo.io/v1
+- path: spec/virtualHost/domains
+  kind: VirtualService
+  apiVersion: gateway.solo.io/v1
+- path: spec/virtualHost/routes/redirectAction/hostRedirect
+  kind: VirtualService
+  apiVersion: gateway.solo.io/v1
+- path: /spec/virtualHost/routes/routeAction/single/upstream/name
+  kind: VirtualService
+  apiVersion: gateway.solo.io/v1
+- path: metadata/name
+  kind: VirtualService
+  apiVersion: gateway.solo.io/v1
+- path: spec/values/gloo/gatewayProxies/gatewayProxy/service/extraAnnotations
+  kind: HelmRelease
+  apiVersion: helm.toolkit.fluxcd.io/v2beta1
+# Certificate Related
+- path: metadata/name
+  kind: Certificate
+  apiVersion: gateway.solo.io/v1
+- path: metadata/namespace
+  kind: Certificate
+  apiVersion: gateway.solo.io/v1
+- path: spec/dnsNames
+  kind: Certificate
+  apiVersion: gateway.solo.io/v1
+- path: spec/secretName
+  kind: Certificate
+  apiVersion: gateway.solo.io/v1
+# ClusterIssuer Related
+- path: spec/acme/email
+  kind: ClusterIssuer
+  apiVersion: cert-manager.io/v1alpha2
+- path: spec/acme/solvers/dns01/route53/region
+  kind: ClusterIssuer
+  apiVersion: cert-manager.io/v1alpha2
+- path: spec/acme/solvers/dns01/route53/hostedZoneID
+  kind: ClusterIssuer
+  apiVersion: cert-manager.io/v1alpha2
+# HelmRelease Related
+# - ChartMuseum Specific
+- path: spec/values/env/open/STORAGE_AMAZON_REGION
+  kind: HelmRelease
+  apiVersion: helm.toolkit.fluxcd.io/v2beta1
+# - Cluster-Autoscaler Specific
+- path: spec/values/autoDiscovery/clusterName
+  kind: HelmRelease
+  apiVersion: helm.toolkit.fluxcd.io/v2beta1
+- path: spec/values/autoDiscovery/tags
+  kind: HelmRelease
+  apiVersion: helm.toolkit.fluxcd.io/v2beta1
+- path: spec/values/awsRegion
+  kind: HelmRelease
+  apiVersion: helm.toolkit.fluxcd.io/v2beta1
+# - General HelmRelease
+- path: spec/values/repository
+  kind: HelmRelease
+  apiVersion: helm.toolkit.fluxcd.io/v2beta1
+# Flux Alert CRD Related
+- path: spec/summary
+  kind: Alert
+  apiVersion: notification.toolkit.fluxcd.io/v1beta1
+# CronJob Related
+# Specific to Flux ECR Credentials Sync Job used by Image Controller
+- path: spec/jobTemplate/spec/template/spec/containers/env/ECR_REGISTRY
+  kind: CronJob
+  apiVersion: batch/v1beta1
+# Flux ImageRepository CRD Related
+- path: spec/image
+  kind: ImageRepository
+  apiVersion: image.toolkit.fluxcd.io/v1beta1 

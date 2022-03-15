@@ -1,0 +1,291 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: prometheus
+  namespace: prometheus
+spec:
+  releaseName: prometheus
+  targetNamespace: prometheus
+  storageNamespace: prometheus
+  chart:
+    spec:
+      chart: prometheus
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+      version: 14.11.0
+  interval: 5m
+  install:
+    # disableWait - see https://toolkit.fluxcd.io/components/helm/helmreleases/#disabling-resource-waiting
+    # may want to turn back on?
+    disableWait: true
+    remediation:
+      retries: 3
+  test:
+    enable: false
+  values:
+  # Required if running Prometheus on a privileged node-group
+    alertmanager:
+      image:
+        tag: v0.23.0 # Supports retrieving Slack URL from a file
+      extraSecretMounts:
+      - name: slack-url
+        mountPath: /etc/slackurl
+        readOnly: true
+        secretName: prometheus-slack-url
+        subPath: ""
+      nodeSelector: 
+        node-group-name: "privileged-ng"
+        topology.kubernetes.io/zone: ${PROMETHEUS_TOPOLOGY_ZONE}
+      tolerations:
+        - key: "privileged"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      persistentVolume:
+        storageClass: "gp2-unencrypted"
+      strategy:
+        type: Recreate
+      resources:
+        limits:
+          cpu: 50m
+          memory: 64Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+    # Required if running Prometheus on a privileged node-group or an ARM node
+    nodeExporter:
+      tolerations:
+        - key: "privileged"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "arm"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      resources:
+        limits:
+          memory: 250Mi
+        requests:
+          cpu: 20m
+          memory: 50Mi
+      priorityClassName: "system-cluster-critical"
+    # Required if running Prometheus on a privileged node-group
+    server:
+      nodeSelector: 
+        node-group-name: "privileged-ng"
+        topology.kubernetes.io/zone: ${PROMETHEUS_TOPOLOGY_ZONE}
+      tolerations:
+        - key: "privileged"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      persistentVolume:
+        storageClass: "gp2-unencrypted"
+        size: 16Gi
+      retention: 7d
+      strategy:
+        type: Recreate
+      extraFlags:
+        - web.enable-lifecycle
+        - storage.tsdb.retention.size=12GB
+      resources:
+        limits:
+          cpu: 500m
+          memory: 4Gi
+        requests:
+          cpu: 250m
+          memory: 2Gi
+    # Required if running Prometheus on a privileged node-group
+    pushgateway:
+      nodeSelector: 
+        node-group-name: "privileged-ng"
+      tolerations:
+        - key: "privileged"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      resources:
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        requests:
+          cpu: 10m
+          memory: 20Mi
+    kube-state-metrics:
+      metricAllowlist: [kube_node_status_condition,kube_cronjob_next_schedule_time,kube_daemonset_status_number_misscheduled,kube_daemonset_status_desired_number_scheduled,kube_daemonset_status_current_number_scheduled,kube_daemonset_status_number_ready,kube_deployment_status_observed_generation,kube_deployment_metadata_generation,kube_deployment_spec_replicas,kube_deployment_status_replicas_available,kube_job_spec_completions,kube_job_status_succeeded,kube_job_status_failed,kube_pod_container_status_restarts_total,kube_statefulset_status_observed_generation,kube_statefulset_metadata_generation,kube_statefulset_status_replicas_ready,kube_statefulset_status_replicas,kube_statefulset_status_current_revision,kube_statefulset_status_update_revision,kube_statefulset_replicas,kube_statefulset_status_replicas_updated,kube_resourcequota,kube_persistentvolume_status_phase,kube_node_status_allocatable,kube_deployment_status_replicas_updated,kube_deployment_spec_paused,kube_pod_status_phase,kube_pod_info,kube_job_status_active,kube_pod_container_resource_requests,kube_pod_container_resource_limits,kube_node_status_capacity,kube_node_info,kube_namespace_created,kube_pod_container_status_running,kube_pod_container_status_waiting,kube_pod_container_status_terminated,kube_deployment_status_replicas,kube_deployment_status_replicas_unavailable,kube_node_spec_unschedulable]
+      prometheusScrape: false
+      nodeSelector: 
+        node-group-name: "privileged-ng"
+      tolerations:
+        - key: "privileged"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      resources:
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        requests:
+          cpu: 10m
+          memory: 20Mi
+    alertmanagerFiles:
+      alertmanager.yml:
+        global: {}
+    extraScrapeConfigs: |
+      - job_name: 'prometheus-alertmanager'
+        honor_timestamps: true
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        scheme: http
+
+        kubernetes_sd_configs:
+        - role: endpoints
+
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_service_label_app, __meta_kubernetes_service_label_component, __meta_kubernetes_service_name]
+          regex: prometheus;alertmanager;prometheus-alertmanager
+          action: keep
+        - source_labels: [__meta_kubernetes_namespace]
+          target_label: namespace
+        - source_labels: [__meta_kubernetes_service_name]
+          target_label: service
+        - source_labels: [__meta_kubernetes_pod_name]
+          target_label: pod
+        - target_label: endpoint
+          replacement: web
+      # - job_name: kubernetes-master-api
+      #   metrics_path: /probe
+      #   honor_timestamps: true
+      #   scrape_interval: 15s
+      #   scrape_timeout: 10s
+      #   params:
+      #     module: [http_2xx]
+      #   kubernetes_sd_configs:
+      #     - role: endpoints
+      #   relabel_configs:
+      #     - action: keep
+      #       regex: default;kubernetes;https
+      #       source_labels:
+      #       - __meta_kubernetes_namespace
+      #       - __meta_kubernetes_service_name
+      #       - __meta_kubernetes_endpoint_port_name
+      #     - source_labels: [__scheme__,__address__]
+      #       regex: (.+);(.+)
+      #       replacement: ${1}://${2}
+      #       target_label: __param_target
+      #     - source_labels: [__param_target]
+      #       target_label: instance
+      #     - source_labels: [__param_module]
+      #       target_label: blackbox_probe_module
+      #     - target_label: __address__
+      #       replacement: prometheus-blackbox-exporter:9115
+      #   bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      #   scheme: https
+      #   tls_config:
+      #     ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      #     insecure_skip_verify: true
+      - job_name: 'prometheus-kube-state-metrics'
+        honor_labels: true
+        honor_timestamps: true
+        kubernetes_sd_configs:
+        - role: endpoints
+        metrics_path: /metrics
+        relabel_configs:
+        - action: keep
+          regex: prometheus;kube-state-metrics
+          source_labels:
+          - __meta_kubernetes_pod_label_app_kubernetes_io_instance
+          - __meta_kubernetes_service_label_app_kubernetes_io_name
+        - source_labels:
+          - __meta_kubernetes_service_label_app_kubernetes_io_name
+          target_label: job
+        # - source_labels:
+        #   - node
+        #   target_label: nodename
+        scheme: http
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        
+        metric_relabel_configs:
+        
+        - action: drop
+          regex: kube_pod_[A-Za-z0-9_]+_reason
+          source_labels:
+          - __name__
+      - job_name: 'prometheus-node-exporter'
+        honor_timestamps: true
+        kubernetes_sd_configs:
+        - role: endpoints
+        metrics_path: /metrics
+        relabel_configs:
+        - action: keep
+          regex: prometheus;node-exporter;metrics
+          source_labels:
+          - __meta_kubernetes_service_label_app
+          - __meta_kubernetes_service_label_component
+          - __meta_kubernetes_endpoint_port_name
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_service_name
+          target_label: service
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_service_label_component
+          target_label: job
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+        - replacement: metrics
+          target_label: endpoint
+        scheme: http
+        scrape_interval: 30s
+        scrape_timeout: 10s
+
+  valuesFrom:
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: alertmanager-values.yaml
+  # - kind: ConfigMap
+  #   name: prometheus-alerts
+  #   valuesKey: etcd-values.yaml
+  # - kind: ConfigMap
+  #   name: prometheus-alerts
+  #   valuesKey: external-endpoint-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: flux-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: general-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: kube-prometheus-node-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: kubernetes-apps-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: kubernetes-resources-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: kubernetes-storage-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: kubernetes-system-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: node-network-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: node-time-values.yaml
+  - kind: ConfigMap
+    name: prometheus-alerts
+    valuesKey: prometheus-values.yaml

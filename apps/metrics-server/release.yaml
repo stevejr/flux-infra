@@ -1,0 +1,38 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: metrics-server
+  namespace: kube-system
+spec:
+  releaseName: kube-system
+  targetNamespace: kube-system
+  storageNamespace: kube-system
+  chart:
+    spec:
+      chart: metrics-server
+      sourceRef:
+        kind: HelmRepository
+        name: metrics-server
+        namespace: flux-system
+      version: 3.7.0
+  interval: 5m
+  install:
+    # disableWait - see https://toolkit.fluxcd.io/components/helm/helmreleases/#disabling-resource-waiting
+    # may want to turn back on?
+    disableWait: true
+    remediation:
+      retries: 3
+  test:
+    enable: false
+  values:
+    nodeSelector: 
+      node-group-name: "privileged-ng"
+    tolerations:
+      - key: "privileged"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+    resources:
+      requests:
+        cpu: 100m
+        memory: 200Mi

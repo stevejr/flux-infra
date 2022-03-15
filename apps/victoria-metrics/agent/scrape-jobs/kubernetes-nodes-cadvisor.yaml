@@ -1,0 +1,46 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMNodeScrape
+metadata:
+  name: kubernetes-nodes-cadvisor
+  namespace: victoria-metrics
+  labels:
+    kustomize.toolkit.fluxcd.io/substitute: disabled 
+spec:
+  jobLabel: job
+  scheme: https
+  tlsConfig:
+    caFile: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+    insecureSkipVerify: true
+  bearerTokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+  scrapeTimeout: 20s
+  relabelConfigs:
+    - sourceLabels: [ "__meta_kubernetes_node_name" ]
+      regex: (.+)
+      targetLabel: __metrics_path__
+      replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+    - action: labelmap
+      regex: __meta_kubernetes_node_label_(.+)
+    - targetLabel: __address__
+      replacement: kubernetes.default.svc:443
+  metricRelabelConfigs:
+    - action: replace
+      sourceLabels:
+      - pod
+      regex: '(.+)'
+      targetLabel: pod_name
+      replacement: '${1}'
+    - action: replace
+      sourceLabels:
+      - container
+      regex: '(.+)'
+      targetLabel: container_name
+      replacement: '${1}'
+    - action: replace
+      targetLabel: name
+      replacement: k8s_stub
+    - action: replace
+      sourceLabels:
+      - id
+      regex: '^/system\.slice/(.+)\.service$'
+      targetLabel: systemd_service_name
+      replacement: '${1}'

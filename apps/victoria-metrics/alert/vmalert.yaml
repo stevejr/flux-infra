@@ -1,0 +1,44 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAlert
+metadata:
+  name: vmalert
+  namespace: victoria-metrics
+spec:
+  image:
+    repository: victoriametrics/vmalert
+    tag: v1.72.0
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  extraArgs:
+    loggerLevel: INFO
+  datasource:
+    url: "http://vmsingle-vmsingle.victoria-metrics.svc.cluster.local:8429"
+  notifier:
+    url: "http://prometheus-alertmanager.prometheus.svc.cluster.local"
+  evaluationInterval: "30s"
+  remoteWrite:
+    url: "http://vmsingle-vmsingle.victoria-metrics.svc.cluster.local:8429"
+    concurrency: 12
+    flushInterval: 5m
+    maxBatchSize: 20
+    maxQueueSize: 100
+  remoteRead:
+    url: "http://vmsingle-vmsingle.victoria-metrics.svc.cluster.local:8429"
+    lookback: 1h
+  nodeSelector:
+    node-group-name: "privileged-ng"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  tolerations:
+    - key: "privileged"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+  ruleSelector:
+    matchLabels:
+      owner: lenscloud-platform

@@ -1,0 +1,38 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: chartmuseum
+  namespace: chartmuseum
+spec:
+  releaseName: chartmuseum
+  targetNamespace: chartmuseum
+  storageNamespace: chartmuseum
+  chart:
+    spec:
+      chart: chartmuseum
+      sourceRef:
+        kind: HelmRepository
+        name: chartmuseum
+        namespace: flux-system
+      version: 2.15.0
+  interval: 5m
+  install:
+    remediation:
+      retries: 3
+  test:
+    enable: false
+  values:
+    env:
+      open:
+        AWS_SDK_LOAD_CONFIG: true
+        DISABLE_API: false
+        STORAGE: amazon
+        STORAGE_AMAZON_BUCKET: lenscloud-charts
+        STORAGE_AMAZON_PREFIX: charts
+        STORAGE_AMAZON_REGION: ${AWS_REGION}
+    serviceAccount:
+      create: false
+      name: chartmuseum
+    securityContext:
+      enabled: true
+      fsGroup: 65534
