@@ -74,8 +74,8 @@ jobs:
           const { README, SHA } = process.env
           await github.request(`PUT /repos/${{ github.repository }}/contents/README.md`, {
             owner: "stevejr",
-            sha: ${SHA},
-            content: ${README},
+            sha: `${SHA}`,
+            content: `${README}`,
             message: "Updated README.md"
           });
     - name: Bump version and push tag
