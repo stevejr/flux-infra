@@ -12,7 +12,9 @@ root_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
 
 readme = '''# Flux Infra Repository
 
-This repositroy contains the infrastructure applications that are deployed to all clusters. The repository should be accessed using a ***GitRepository*** Flux resource with a reference to a specific tag. By accessing the repository with a tag reference we can controll the versions of apps at a more granular level.
+This repositroy contains the infrastructure applications that are deployed to all clusters. The repository should be accessed using a ***GitRepository*** Flux resource with a reference to a specific tag.
+
+By accessing the repository with a tag reference we can control the versions of apps at a more granular level.
 
 ## Available Resources
 
@@ -54,8 +56,3 @@ if __name__ == "__main__":
         # print("Updating README.md")
         f.write(readme)
         f.write("\n".join(table))
-
-    with open('README.md', 'rb') as f:
-        bytes = f.read() # read entire file as bytes
-        readable_hash = hashlib.sha256(bytes).hexdigest()
-        print(readable_hash)  
