@@ -50,8 +50,8 @@ jobs:
           const readme = await github.request(`/repos/${{ github.repository }}/contents/README.md`);
 
           console.log(readme);
-          console.log(readme.sha);
-          return readme.sha
+          console.log(readme.data.sha);
+          return readme.data.sha
         result-encoding: string
       id: readme_sha
     - name: Update README # run parse-ks.py to update README.md
