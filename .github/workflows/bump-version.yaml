@@ -60,8 +60,8 @@ jobs:
     - name: Get README as base64
       run: |
         cat README.md
-        cat README.md | base64
-        echo "::set-output name=readme_b64::$(cat README.md | base64)"
+        base64 README.md | tr -d \\n
+        echo "::set-output name=readme_b64::$(base64 README.md | tr -d \\n)"
       id: readme_base64
     - name: Save README.md
       uses: actions/github-script@v4.0.2
