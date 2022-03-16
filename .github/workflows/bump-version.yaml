@@ -56,23 +56,26 @@ jobs:
       id: readme_sha
     - name: Update README # run parse-ks.py to update README.md
       run: |
-        output=$(python parse-ks.py)
-        echo "::set-output name=readme_sha::$output"
-      id: update_readme
+        python parse-ks.py
     - name: Get README as base64
       run: |
-        output=$(cat README.md | base64)
-        echo "::set-output name=readme_base64::$output"
+        cat README.md
+        cat README.md | base64
+        echo "::set-output name=readme_b64::$(cat README.md | base64)"
       id: readme_base64
     - name: Save README.md
       uses: actions/github-script@v4.0.2
+      env:
+        README: ${{ steps.readme_base64.outputs.readme_b64 }}
+        SHA: ${{ steps.readme_sha.outputs.result }}
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
+          const { README, SHA } = process.env
           await github.request(`PUT /repos/${{ github.repository }}/contents/README.md`, {
             owner: "stevejr",
-            sha: "${{ steps.readme_sha.outputs.result }}",
-            content: "${{ steps.readme_base64.outputs.readme_base64 }}",
+            sha: ${SHA},
+            content: ${README},
             message: "Updated README.md"
           });
     - name: Bump version and push tag
@@ -81,23 +84,3 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GH_RELEASE_PAT }}
         WITH_V: true
         DEFAULT_BUMP: ${{ github.event.inputs.version }}
-
-    # - name: Setup Node.js
-    #   uses: actions/setup-node@v2
-    #   with:
-    #     node-version: '16'
-    #     cache: 'npm'
-
-    # - name: Install npm packages
-    #   run: npm ci
-
-    # - name: Setup Git
-    #   run: |
-    #     git config user.name 'Myles Borins'
-    #     git config user.email 'myles.borins@gmail.com'
-
-    # - name: bump version
-    #   run: npm version ${{ github.event.inputs.version }}
-
-    # - name: Push latest version
-    #   run: git push origin main --follow-tags
