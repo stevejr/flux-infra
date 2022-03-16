@@ -32,11 +32,35 @@ jobs:
     # when we push changes, it will trigger the release workflow
     # run that runs on: tag. (Using the GitHub token would
     # not run the workflow to prevent infinite recursion.)
+    - name: Setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8 #install the python needed
     - name: Check out source
       uses: actions/checkout@v2
       with:
         fetch-depth: '0'
-
+    - name: Update README # run the run.py to get the latest data
+      run: |
+        output=$(python parse-ks.py)
+        echo "::set-output name=readme_sha::$output"
+      id: update_readme
+    - name: Get README as base64
+      run: |
+        output=$(echo README.md | base64)
+        echo "::set-output name=readme_base64::$output"
+      id: readme_base64
+    - name: Save README.md
+      uses: actions/github-script@v4.0.2
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          await github.request(`PUT /repos/${{ github.repository }}/contents/README.md`, {
+            owner: "stevejr",
+            sha: "${{ steps.update_readme.outputs.readme_sha }}",
+            content: "${{ steps.readme_base64.outputs.readme_base64 }}",
+            message: "Updated README.md"
+          });
     - name: Bump version and push tag
       uses: anothrNick/github-tag-action@1.36.0
       env:
