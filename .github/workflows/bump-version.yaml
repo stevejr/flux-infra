@@ -42,14 +42,23 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: '0'
-    - name: Update README # run the run.py to get the latest data
+    - name: Get README.md sha
+      uses: actions/github-script@v4.0.2
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const readme = await github.request(`/repos/${{ github.repository }}/contents/README.md`);
+          return readme.sha
+        result-encoding: string
+        id: readme_sha
+    - name: Update README # run parse-ks.py to update README.md
       run: |
         output=$(python parse-ks.py)
         echo "::set-output name=readme_sha::$output"
       id: update_readme
     - name: Get README as base64
       run: |
-        output=$(echo README.md | base64)
+        output=$(cat README.md | base64)
         echo "::set-output name=readme_base64::$output"
       id: readme_base64
     - name: Save README.md
@@ -59,7 +68,7 @@ jobs:
         script: |
           await github.request(`PUT /repos/${{ github.repository }}/contents/README.md`, {
             owner: "stevejr",
-            sha: "${{ steps.update_readme.outputs.readme_sha }}",
+            sha: "${{ steps.readme_sha.outputs.result }}",
             content: "${{ steps.readme_base64.outputs.readme_base64 }}",
             message: "Updated README.md"
           });
