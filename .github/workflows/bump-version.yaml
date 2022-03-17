@@ -59,7 +59,7 @@ jobs:
         python parse-ks.py
     - name: Get README as base64
       run: |
-        cat README.md
+        echo "$(cat README.md)"
         base64 README.md | tr -d \\n
         echo "::set-output name=readme_b64::$(base64 README.md | tr -d \\n)"
       id: readme_base64
@@ -72,6 +72,10 @@ jobs:
         github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
           const { README, SHA } = process.env
+
+          console.log(`README Contents: ${README}\n`);
+          console.log(`SHA Contents: ${SHA}\n`);
+
           await github.request(`PUT /repos/${{ github.repository }}/contents/README.md`, {
             owner: "stevejr",
             sha: `${SHA}`,
