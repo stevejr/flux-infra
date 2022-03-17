@@ -10,7 +10,7 @@ spec:
     promscrape.streamParse: 'true'
   image:
     repository: victoriametrics/victoria-metrics
-    tag: v1.72.0
+    tag: ${VMSINGLE_VERSION}
     pullPolicy: IfNotPresent
   nodeSelector:
     node-group-name: "privileged-ng"
