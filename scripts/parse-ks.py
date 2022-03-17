@@ -6,8 +6,8 @@ import yaml
 import os
 import hashlib
 
-# root_dir = sys.argv[1]
-root_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
+root_dir = sys.argv[1]
+# root_dir = dir_path = os.path.dirname(os.path.realpath(__file__))
 # print('root_dir = ' + root_dir)
 
 readme = '''# Flux Infra Repository
