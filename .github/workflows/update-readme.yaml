@@ -5,6 +5,7 @@ name: Update README.md
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
+  workflow_dispatch:
   pull_request:
     types:
       - closed
@@ -44,7 +45,7 @@ jobs:
       id: readme_sha
     - name: Update README # run parse-ks.py to update README.md
       run: |
-        python ./scripts/parse-ks.py $(PWD)
+        python ./scripts/parse-ks.py "${PWD}"
     - name: Get README as base64
       run: |
         base64 README.md | tr -d \\n > README_B64.md
