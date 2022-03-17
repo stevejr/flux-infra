@@ -18,4 +18,4 @@ grafana | HelmRelease | Chart Version: 6.9.1 | apps/grafana/release.yaml
 metrics-server | HelmRelease | Chart Version: 3.7.0 | apps/metrics-server/release.yaml
 prometheus-blackbox-exporter | HelmRelease | Chart Version: 4.10.2 | apps/prometheus-blackbox-exporter/release.yaml
 cluster-autoscaler | HelmRelease | Chart Version: 9.4.0 | apps/cluster-autoscaler/release.yaml
-cert-manager | HelmRelease | Chart Version: 1.1.0 | apps/cert-manager/release.yaml
+cert-manager | HelmRelease | Chart Version: 1.7.1 | apps/cert-manager/release.yaml
