@@ -1,0 +1,68 @@
+# This is a basic workflow that is triggered when a PR is merged
+
+name: Update README.md
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  pull_request:
+    types:
+      - closed
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  update_readme:
+    # Only run if a PR has been merged
+    if: github.event.pull_request.merged == true
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Check out the content (source branch). Get the SHA for the current README.md and 
+    # then update it by running the parse-ks.py python script.
+    # Commit the updated README.md back to the repo.
+    - name: Setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8 #install the python needed
+    - name: Install Python Dependencies
+      run: pip install pyyaml==6.0
+    - name: Check out source
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
+    - name: Get README.md sha
+      uses: actions/github-script@v4.0.2
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const readme = await github.request(`/repos/${{ github.repository }}/contents/README.md`);
+
+          return readme.data.sha
+        result-encoding: string
+      id: readme_sha
+    - name: Update README # run parse-ks.py to update README.md
+      run: |
+        python parse-ks.py
+    - name: Get README as base64
+      run: |
+        base64 README.md | tr -d \\n > README_B64.md
+        echo "::set-output name=readme-b64::$(base64 README.md | tr -d \\n)"
+      id: readme_base64
+    - name: Save README.md
+      uses: actions/github-script@v4.0.2
+      env:
+        README: ${{ steps.readme_base64.outputs.readme-b64 }}
+        SHA: ${{ steps.readme_sha.outputs.result }}
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const { README, SHA } = process.env;
+
+          await github.request(`PUT /repos/${{ github.repository }}/contents/README.md`, {
+            owner: "stevejr",
+            sha: `${SHA}`,
+            content: `${README}`,
+            message: "Updated README.md"
+          });
