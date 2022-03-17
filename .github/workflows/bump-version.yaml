@@ -61,12 +61,12 @@ jobs:
       run: |
         echo "$(cat README.md)"
         base64 README.md | tr -d \\n
-        echo "::set-output name=readme_b64::$(base64 README.md | tr -d \\n)"
+        echo "::set-output name=readme-b64::$(base64 README.md | tr -d \\n)"
       id: readme_base64
     - name: Save README.md
       uses: actions/github-script@v4.0.2
       env:
-        README: ${{ steps.readme_base64.outputs.readme_b64 }}
+        README: ${{ steps.readme_base64.outputs.readme-b64 }}
         SHA: ${{ steps.readme_sha.outputs.result }}
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
