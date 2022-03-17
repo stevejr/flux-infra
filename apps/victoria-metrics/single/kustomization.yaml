@@ -4,6 +4,7 @@ namespace: victoria-metrics
 
 resources:
   - namespace.yaml
+  - imagerepository.yaml
   - vmsingle.yaml
 
 configMapGenerator:
