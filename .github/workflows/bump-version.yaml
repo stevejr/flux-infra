@@ -71,7 +71,8 @@ jobs:
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
-          const { README, SHA } = process.env
+          const { SHA } = process.env
+          const README = btoa(README.md);
 
           console.log(`README Contents: ${README}\n`);
           console.log(`SHA Contents: ${SHA}\n`);
