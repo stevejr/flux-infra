@@ -44,7 +44,7 @@ jobs:
       id: readme_sha
     - name: Update README # run parse-ks.py to update README.md
       run: |
-        python parse-ks.py
+        python ./scripts/parse-ks.py
     - name: Get README as base64
       run: |
         base64 README.md | tr -d \\n > README_B64.md
