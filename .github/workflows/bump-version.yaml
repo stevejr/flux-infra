@@ -21,17 +21,15 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "bump-version"
-  bump-version:
+  update_readme:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Check out the content (source branch).  Use a deploy key so that
-    # when we push changes, it will trigger the release workflow
-    # run that runs on: tag. (Using the GitHub token would
-    # not run the workflow to prevent infinite recursion.)
+    # Check out the content (source branch). Get the SHA for the current README.md and 
+    # then update it by running the parse-ks.py python script.
+    # Commit the updated README.md back to the repo.
     - name: Setup python
       uses: actions/setup-python@v2
       with:
@@ -49,8 +47,6 @@ jobs:
         script: |
           const readme = await github.request(`/repos/${{ github.repository }}/contents/README.md`);
 
-          console.log(readme);
-          console.log(readme.data.sha);
           return readme.data.sha
         result-encoding: string
       id: readme_sha
@@ -71,11 +67,11 @@ jobs:
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
-          const fs = require('fs');
-          const README_B64 = fs.readFileSync("./README_B64.md", "utf-8");
+          // const fs = require('fs');
+          // const README_B64 = fs.readFileSync("./README_B64.md", "utf-8");
           const { README, SHA } = process.env;
-          
-          console.log(`README_B64 Contents: ${README_B64}\n`);
+
+          // console.log(`README_B64 Contents: ${README_B64}\n`);
           console.log(`README Contents: ${README}\n`);
           console.log(`SHA Contents: ${SHA}\n`);
 
@@ -85,6 +81,22 @@ jobs:
             content: `${README}`,
             message: "Updated README.md"
           });
+  bump-version:
+    # Needs the update_readme job to complete successfully
+    needs: update_readme
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Check out the content (source branch).  Use a deploy key so that
+    # when we push changes, it will trigger the release workflow
+    # run that runs on: tag. (Using the GitHub token would
+    # not run the workflow to prevent infinite recursion.)
+    - name: Check out source
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
     - name: Bump version and push tag
       uses: anothrNick/github-tag-action@1.36.0
       env:
