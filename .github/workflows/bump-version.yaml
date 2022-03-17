@@ -73,7 +73,8 @@ jobs:
         script: |
           const fs = require('fs');
           const README_B64 = fs.readFileSync("./README_B64.md", "utf-8");
-
+          const { README, SHA } = process.env;
+          
           console.log(`README_B64 Contents: ${README_B64}\n`);
           console.log(`README Contents: ${README}\n`);
           console.log(`SHA Contents: ${SHA}\n`);
