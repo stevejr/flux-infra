@@ -40,7 +40,7 @@ if __name__ == "__main__":
                     # print("Chart Name: %s, Chart Version: %s \n" % (dataMap['spec']['chart']['spec']['sourceRef']['name'], dataMap['spec']['chart']['spec']['version']))
                     # print("File contents: \n %s \n" % dataMap)
                     table.append(
-                        f"{dataMap['metadata']['name']} | HelmRelease | Chart Version: {dataMap['spec']['chart']['spec']['version']} | {filename}"
+                        f"{dataMap['metadata']['name']} | HelmRelease | Chart Version: {dataMap['spec']['chart']['spec']['version']} | {os.path.relpath(filename)}"
                     )
                 if "kind" in dataMap and dataMap["kind"] == "Deployment":
                     # print("Filename with a Deployment: %s " % filename)
@@ -48,7 +48,7 @@ if __name__ == "__main__":
                     for container in dataMap['spec']['template']['spec']['containers']:
                         # print("Deployment Name: %s, Image Name: %s \n" %(dataMap['metadata']['name'], container['image']))
                         table.append(
-                            f"{dataMap['metadata']['name']} (Container: {container['name']})| Deployment | Container Image: {container['image']} | {filename}"
+                            f"{dataMap['metadata']['name']} (Container: {container['name']})| Deployment | Container Image: {container['image']} | {os.path.relpath(filename)}"
                         )
     # print("Finished processing repo")
 
