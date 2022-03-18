@@ -1,0 +1,203 @@
+apiServer:
+  deployment:
+    SslSecretName: ""
+    envoy:
+      bootstrapConfig:
+        configMapName: default-apiserver-envoy-config
+      image:
+        extended: false
+        pullPolicy: IfNotPresent
+        repository: grpcserver-envoy
+        tag: 1.6.26
+    floatingUserId: false
+    runAsUser: 10101
+    server:
+      grpcPort: 10101
+      image:
+        extended: false
+        pullPolicy: IfNotPresent
+        repository: grpcserver-ee
+        tag: 1.6.26
+      oauth:
+        client: ""
+        server: ""
+    stats: null
+    ui:
+      image:
+        extended: false
+        pullPolicy: IfNotPresent
+        repository: grpcserver-ui
+        tag: 1.6.26
+      staticPort: 8080
+  enable: true
+  enableBeta: true
+  service:
+    name: apiserver-ui
+    serviceType: ClusterIP
+create_license_secret: false
+global:
+  extensions:
+    extAuth:
+      enabled: false
+  glooMtls:
+    enabled: false
+    envoy: {}
+    sds: {}
+  glooRbac:
+    create: true
+    nameSuffix: ""
+    namespaced: false
+  glooStats:
+    enabled: true
+  image:
+    extended: false
+    pullPolicy: IfNotPresent
+    registry: quay.io/solo-io
+  istioSDS: {}
+gloo:
+  accessLogger:
+    enabled: false
+    fsGroup: 0
+    image:
+      extended: false
+      repository: access-logger
+      tag: 1.6.22
+    port: 8083
+    replicas: 1
+    runAsUser: 0
+    serviceName: AccessLog
+  discovery:
+    deployment:
+      floatingUserId: false
+      fsGroup: 10101
+      image:
+        extended: false
+        pullPolicy: IfNotPresent
+        registry: quay.io/solo-io
+        repository: discovery
+        tag: 1.6.22
+      runAsUser: 10101
+    enabled: true
+    fdsMode: WHITELIST
+    serviceAccount:
+      disableAutomount: false
+  gateway:
+    certGenJob:
+      enabled: true
+      floatingUserId: false
+      image:
+        extended: false
+        registry: quay.io/solo-io
+        repository: certgen
+      restartPolicy: OnFailure
+      runAsUser: 10101
+      setTtlAfterFinished: true
+      ttlSecondsAfterFinished: 60
+    deployment:
+      floatingUserId: false
+      image:
+        extended: false
+        pullPolicy: IfNotPresent
+        registry: quay.io/solo-io
+        repository: gateway
+        tag: 1.6.22
+      runAsUser: 10101
+    enabled: true
+    proxyServiceAccount:
+      disableAutomount: false
+    readGatewaysFromAllNamespaces: false
+    serviceAccount:
+      disableAutomount: false
+    updateValues: true
+    validation:
+      allowWarnings: true
+      alwaysAcceptResources: true
+      disableTransformationValidation: false
+      enabled: true
+      failurePolicy: Ignore
+      secretName: gateway-validation-certs
+      webhook:
+        enabled: true
+  gatewayProxies:
+    gatewayProxy:
+      antiAffinity: false
+      envoyApiVersion: V3
+      envoyBootstrapExtensions: null
+      envoyStaticClusters: null
+      failover:
+        enabled: false
+        secretName: ""
+      kind:
+        deployment:
+          replicas: 1
+      podTemplate:
+        customReadinessProbe: {}
+        disableNetBind: true
+        floatingUserId: false
+        fsGroup: 10101
+        gracefulShutdown:
+          enabled: false
+          sleepTimeSeconds: 25
+        httpPort: 8080
+        httpsPort: 8443
+        image:
+          extended: false
+          pullPolicy: IfNotPresent
+          repository: gloo-envoy-wrapper
+          tag: 1.6.22
+        probes: false
+        runAsUser: 10101
+        runUnprivileged: true
+        terminationGracePeriodSeconds: 0
+        tolerations: null
+      readConfig: false
+      readConfigMulticluster: false
+      service:
+        extraAnnotations:
+          prometheus.io/path: /metrics
+          prometheus.io/port: "8081"
+          prometheus.io/scrape: "true"
+        httpPort: 80
+        httpsFirst: false
+        httpsPort: 443
+        type: LoadBalancer
+  gloo:
+    deployment:
+      disableUsageStatistics: false
+      floatingUserId: false
+      image:
+        extended: false
+        pullPolicy: IfNotPresent
+        repository: gloo
+        tag: 1.6.22
+      replicas: 1
+      runAsUser: 10101
+    serviceAccount:
+      disableAutomount: false
+  settings:
+    aws:
+      enableCredentialsDiscovery: false
+      enableServiceAccountCredentials: false
+      stsCredentialsRegion: ""
+    create: false
+    disableKubernetesDestinations: false
+    disableProxyGarbageCollection: false
+    linkerd: false
+    regexMaxProgramSize: 0
+    singleNamespace: false
+license_secret_name: ""
+rateLimit:
+  enabled: false
+rbac:
+  create: false
+settings:
+  aws:
+    enableCredentialsDiscovery: false
+    enableServiceAccountCredentials: false
+    stsCredentialsRegion: ""
+  create: true
+  disableKubernetesDestinations: false
+  disableProxyGarbageCollection: false
+  linkerd: false
+  regexMaxProgramSize: 0
+  singleNamespace: false
