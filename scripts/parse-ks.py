@@ -20,6 +20,12 @@ def get_hr_version(element):
         raise AttributeError('keys_exists() expects dict as first argument.')
     
     try:
+        if element['spec']['chart']['spec']['sourceRef']['kind'] == "GitRepository":
+            filename = root_dir + "/" + element['spec']['chart']['spec']['chart'] + "/Chart.yaml"
+            with open(filename) as f:
+                dataMap = yaml.safe_load(f)
+                return dataMap['version']
+
         return element['spec']['chart']['spec']['version']
     except KeyError:
         return "UNKNOWN"
