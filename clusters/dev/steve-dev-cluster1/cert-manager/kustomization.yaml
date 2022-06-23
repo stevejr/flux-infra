@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../../apps/cert-manager
+
+configMapGenerator:
+- name: cert-manager-helm-values
+  namespace: cert-manager
+  behavior: merge
+  files:
+  - cluster-values.yaml=./values.yaml
+
+patches:
+- target:
+    kind: HelmRelease
+    name: cert-manager
+    namespace: cert-manager
+  patch: |-
+    - op: add
+      path: /spec/valuesFrom/-
+      value: 
+        kind: ConfigMap
+        name: cert-manager-helm-values
+        valuesKey: cluster-values.yaml

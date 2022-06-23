@@ -1,0 +1,30 @@
+installCRDs: false
+# Added SecurityContext due to https://github.com/jetstack/cert-manager/issues/1422
+securityContext:
+  fsGroup: 65534
+serviceAccount:
+  create: false
+  name: cert-manager
+resources:
+  requests:
+    cpu: 10m
+    memory: 100Mi
+  limits:
+    cpu: 20m
+    memory: 1024Mi
+webhook:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 100Mi
+    limits:
+      cpu: 40m
+      memory: 1024Mi
+cainjector:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 100Mi
+    limits:
+      cpu: 40m
+      memory: 1024Mi
