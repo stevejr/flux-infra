@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: cert-manager.steve-dev-cluster1
+  namespace: cert-manager
+spec:
+  secretName: cert-manager.steve-dev-cluster1
+  dnsNames:
+  - cert-manager.steve-dev-cluster1.example.com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer

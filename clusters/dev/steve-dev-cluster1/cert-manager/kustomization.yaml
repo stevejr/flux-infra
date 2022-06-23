@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../../../apps/cert-manager
+  - ./certificate.yaml
 
 configMapGenerator:
 - name: cert-manager-helm-values
